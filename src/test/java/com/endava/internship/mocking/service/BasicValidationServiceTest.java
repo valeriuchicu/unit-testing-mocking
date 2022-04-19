@@ -6,96 +6,88 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
+
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class BasicValidationServiceTest {
 
-    BasicValidationService mockBasicValidationService;
-    ValidationService basicValidationService;
+    ValidationService validationService;
 
     @BeforeEach
     void setUp() {
-        mockBasicValidationService = mock(BasicValidationService.class);
-        basicValidationService = new BasicValidationService();
+        validationService = new BasicValidationService();
     }
 
     @Test
-    void validateAmountShouldCheckSuccessOfValidationOfAmount() {
-        mockBasicValidationService.validateAmount(333.00);
-        verify(mockBasicValidationService, times(1)).validateAmount(333.00);
+    void shouldAcceptTheAmount() {
+        assertDoesNotThrow(() -> validationService.validateAmount(55.00));
     }
 
     @Test
-    void validateAmountShouldThrowIllegalArgumentExceptionIfTheParameterIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validateAmount(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Amount must not be null");
+    void shouldThrowIllegalArgumentExceptionIfTheParameterIsNull() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validateAmount(null))
+                .withMessage("Amount must not be null");
     }
 
     @ParameterizedTest
     @ValueSource(doubles = {0.00, -5.00})
-    void validateAmountShouldThrowIllegalArgumentExceptionIfTheParameterLessOrEqualsToZero(Double amount) {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validateAmount(amount));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Amount must be greater than 0");
+    void shouldThrowIllegalArgumentExceptionIfTheParameterLessOrEqualsToZero(Double amount) {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validateAmount(amount))
+                .withMessage("Amount must be greater than 0");
     }
 
     @Test
-    void validatePaymentIdShouldCheckSuccessOfValidationOfPaymentId() {
-        mockBasicValidationService.validatePaymentId(UUID.randomUUID());
-        ArgumentCaptor<UUID> argumentCaptor = ArgumentCaptor.forClass(UUID.class);
-        verify(mockBasicValidationService, times(1)).validatePaymentId(argumentCaptor.capture());
+    void shouldAcceptPaymentId() {
+        assertDoesNotThrow(() -> validationService.validatePaymentId(UUID.randomUUID()));
     }
 
     @Test
-    void validatePaymentIdShouldThrowIllegalArgumentExceptionIfTheParameterIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validatePaymentId(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment id must not be null");
+    void shouldThrowIllegalArgumentExceptionIfPaymentIdIsNull() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validatePaymentId(null))
+                .withMessage("Payment id must not be null");
     }
 
     @Test
-    void validateUserIdShouldCheckSuccessOfValidationOfUserId() {
-        mockBasicValidationService.validateUserId(11);
-        verify(mockBasicValidationService, times(1)).validateUserId(11);
+    void shouldAcceptUserId() {
+        assertDoesNotThrow(() -> validationService.validateUserId(11));
     }
 
     @Test
-    void validateUserIdShouldThrowIllegalArgumentExceptionIfTheParameterIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validateUserId(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "User id must not be null");
+    void shouldThrowIllegalArgumentExceptionIfUserIsNull() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validateUserId(null))
+                .withMessage("User id must not be null");
     }
 
     @Test
-    void validateUserShouldCheckSuccessOfValidationOfUser() {
-        User user = new User(11, "Ben", Status.ACTIVE);
-        mockBasicValidationService.validateUser(user);
-        verify(mockBasicValidationService, times(1)).validateUser(user);
+    void shouldAcceptUser() {
+        assertDoesNotThrow(() -> validationService.validateUser(new User(11, "Ron", Status.ACTIVE)));
     }
 
     @Test
-    void validateUserShouldThrowIllegalArgumentExceptionIfTheUserIsInactive() {
+    void shouldThrowIllegalArgumentExceptionIfTheUserIsInactive() {
         User user = new User(11, "Ben", Status.INACTIVE);
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validateUser(user));
-        assertEquals(exceptionThatWasThrown.getMessage(), "User with id " + user.getId() + " not in ACTIVE status");
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validateUser(user))
+                .withMessage("User with id " + user.getId() + " not in ACTIVE status");
     }
 
     @Test
-    void validateMessageShouldCheckSuccessOfValidationOfMessage() {
-        mockBasicValidationService.validateMessage("hello");
-        verify(mockBasicValidationService, times(1)).validateMessage("hello");
+    void shouldAcceptTheMessage() {
+        assertDoesNotThrow(() -> validationService.validateMessage("Payment is complete"));
     }
 
     @Test
-    void validateMessageShouldThrowIllegalArgumentExceptionIfTheParameterIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> basicValidationService.validateMessage(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment message must not be null");
+    void shouldThrowIllegalArgumentExceptionIfMessageIsNull() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> validationService.validateMessage(null))
+                .withMessage("Payment message must not be null");
     }
 }

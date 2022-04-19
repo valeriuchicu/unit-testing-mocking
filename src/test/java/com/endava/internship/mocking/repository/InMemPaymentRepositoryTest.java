@@ -4,9 +4,8 @@ import com.endava.internship.mocking.model.Payment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -14,62 +13,74 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class InMemPaymentRepositoryTest {
 
-    PaymentRepository inMemPaymentRepository;
+    PaymentRepository paymentRepository;
+
     Payment payment;
+
     Payment payment1;
 
+    Payment payment2;
+
     @BeforeEach
-    void setUp(){
-        inMemPaymentRepository = new InMemPaymentRepository();
+    void setUp() {
+        paymentRepository = new InMemPaymentRepository();
         payment = new Payment(33, 555.00, "Insert amount");
         payment1 = new Payment(44, 666.00, "Insert amount");
-        inMemPaymentRepository.save(payment);
-        inMemPaymentRepository.save(payment1);
+        payment2 = new Payment(55, 777.00, "Insert amount");
+        paymentRepository.save(payment);
+        paymentRepository.save(payment1);
     }
 
     @Test
-    void findByIdShouldThrowIllegalArgumentExceptionIfTheUUIDIsNull() {
+    void shouldThrowIllegalArgumentExceptionIfTheUUIDIsNull() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> inMemPaymentRepository.findById(null))
+                .isThrownBy(() -> paymentRepository.findById(null))
                 .withMessage("Payment id must not be null");
     }
 
     @Test
-    void findByIdShouldReturnPaymentById() {
-        assertEquals(payment, inMemPaymentRepository.findById(payment.getPaymentId()).get());
+    void shouldReturnPaymentById() {
+        assertEquals(Optional.of(payment), paymentRepository.findById(payment.getPaymentId()));
     }
 
     @Test
-    void findAllShouldReturnAllPayments() {
-        assertThat(inMemPaymentRepository.findAll()).containsExactlyInAnyOrder(payment, payment1);
+    void shouldReturnAllPayments() {
+        assertThat(paymentRepository.findAll()).containsExactlyInAnyOrder(payment, payment1);
     }
 
     @Test
-    void saveShouldThrowIllegalArgumentExceptionIfThePaymentIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> inMemPaymentRepository.save(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment must not be null");
-    }
-    @Test
-    void saveShouldThrowIllegalArgumentExceptionIfThePaymentIsAlreadySaved() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> inMemPaymentRepository.save(payment));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment with id " + payment.getPaymentId() + "already saved");
-    }
-    @Test
-    void saveShouldReturnSavedPayment() {
-        assertEquals(payment1, inMemPaymentRepository.save(payment1));
+    void shouldThrowIllegalArgumentExceptionIfThePaymentIsNull() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> paymentRepository.save(null))
+                .withMessage("Payment must not be null");
+
     }
 
     @Test
-    void editMessageShouldThrowNoSuchElementExceptionIfThePaymentIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(NoSuchElementException.class,
-                () -> inMemPaymentRepository.editMessage(payment1.getPaymentId(),"The payment was canceled"));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment with id " + payment1.getPaymentId() + " not found");
+    void shouldThrowIllegalArgumentExceptionIfThePaymentIsAlreadySaved() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> paymentRepository.save(payment))
+                .withMessage("Payment with id " + payment.getPaymentId() + " already saved");
     }
+
     @Test
-    void editMessageShouldSetNewMessage() {
-        Payment paymenttest = inMemPaymentRepository.editMessage(payment.getPaymentId(),"The payment was canceled");
-        assertEquals("The payment was canceled", paymenttest.getMessage());
+    void shouldReturnSavedPayment() {
+        assertEquals(payment2, paymentRepository.save(payment2));
+    }
+
+    @Test
+    void shouldThrowNoSuchElementExceptionIfThePaymentIsNull() {
+        assertThatExceptionOfType(NoSuchElementException.class)
+                .isThrownBy(() -> paymentRepository.editMessage(payment2.getPaymentId(), "The payment was canceled"))
+                .withMessage("Payment with id " + payment2.getPaymentId() + " not found");
+
+    }
+
+    @Test
+    void shouldSetNewMessage() {
+        String expectedMessage = "The payment was canceled";
+        Payment editedPayment = paymentRepository.editMessage(payment.getPaymentId(), "The payment was canceled");
+
+        assertEquals(expectedMessage, editedPayment.getMessage());
     }
 }

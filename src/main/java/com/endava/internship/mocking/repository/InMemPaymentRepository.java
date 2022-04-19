@@ -46,7 +46,7 @@ public class InMemPaymentRepository implements PaymentRepository {
         }
 
         if (nonNull(payment.getPaymentId()) && findById(payment.getPaymentId()).isPresent()) {
-            throw new IllegalArgumentException("Payment with id " + payment.getPaymentId() + "already saved");
+            throw new IllegalArgumentException("Payment with id " + payment.getPaymentId() + " already saved");
         }
 
         paymentMap.put(payment.getPaymentId(), Payment.copyOf(payment));
