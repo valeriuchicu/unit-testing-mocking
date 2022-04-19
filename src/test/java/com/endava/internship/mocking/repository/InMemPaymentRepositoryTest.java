@@ -9,11 +9,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.*;
 
 class InMemPaymentRepositoryTest {
 
-    InMemPaymentRepository inMemPaymentRepository;
+    PaymentRepository inMemPaymentRepository;
     Payment payment;
     Payment payment1;
 
@@ -23,13 +24,14 @@ class InMemPaymentRepositoryTest {
         payment = new Payment(33, 555.00, "Insert amount");
         payment1 = new Payment(44, 666.00, "Insert amount");
         inMemPaymentRepository.save(payment);
+        inMemPaymentRepository.save(payment1);
     }
 
     @Test
     void findByIdShouldThrowIllegalArgumentExceptionIfTheUUIDIsNull() {
-        Throwable exceptionThatWasThrown = assertThrows(IllegalArgumentException.class,
-                () -> inMemPaymentRepository.findById(null));
-        assertEquals(exceptionThatWasThrown.getMessage(), "Payment id must not be null");
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> inMemPaymentRepository.findById(null))
+                .withMessage("Payment id must not be null");
     }
 
     @Test
@@ -39,12 +41,7 @@ class InMemPaymentRepositoryTest {
 
     @Test
     void findAllShouldReturnAllPayments() {
-        inMemPaymentRepository.save(payment1);
-        List<Payment> paymentList = new ArrayList<>();
-        paymentList.add(payment);
-        paymentList.add(payment1);
-
-        assertThat(paymentList).hasSameElementsAs(inMemPaymentRepository.findAll());
+        assertThat(inMemPaymentRepository.findAll()).containsExactlyInAnyOrder(payment, payment1);
     }
 
     @Test

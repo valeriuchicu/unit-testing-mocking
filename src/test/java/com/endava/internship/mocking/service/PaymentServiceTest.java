@@ -1,5 +1,6 @@
 package com.endava.internship.mocking.service;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,40 +42,28 @@ class PaymentServiceTest {
     }
 
     @Test
-    void createPaymentShouldValidateServiceValidateUserIdAndAmount() {
-        when(userRepository.findById(11)).thenReturn(Optional.ofNullable(user));
-        validationService.validateUserId(11);
-        validationService.validateAmount(333.00);
-        validationService.validateUser(user);
-
-        verify(validationService).validateUserId(11);
-        verify(validationService).validateAmount(333.00);
-        when(userRepository.findById(11)).thenReturn(Optional.ofNullable(user));
-        verify(validationService).validateUser(user);
-
-        paymentService.createPayment(11, 333.00);
-
-        assertEquals(user, userRepository.findById(11).orElse(null));
-    }
-
-    @Test
     void createPaymentShouldThrowNoSuchElementException() {
-        Throwable exceptionThatWasThrown = assertThrows(NoSuchElementException.class
-                , () -> paymentService.createPayment(11, 55.00));
-        assertEquals(exceptionThatWasThrown.getMessage(), "User with id " + 11 + " not found");
+        when(userRepository.findById(11)).thenThrow(new NoSuchElementException("User with id 11 not found"));
 
-        Throwable exceptionThatWasThrown1 = assertThrows(NoSuchElementException.class
-                , () -> paymentService.createPayment(22, 66.00));
-        assertNotEquals(exceptionThatWasThrown1.getMessage(), "User with id " + 11 + " not found");
+        verify(validationService, never()).validateUser(user);
+        assertThatExceptionOfType(NoSuchElementException.class)
+                .isThrownBy(() -> paymentService.createPayment(11, 55.00))
+                .withMessage("User with id 11 not found");
     }
 
-    @Captor
-    ArgumentCaptor<Payment> paymentArgumentCaptor;
-
     @Test
-    void createPaymentShouldCheckUserIdAmountAndMessage() {
-        when(userRepository.findById(11)).thenReturn(Optional.ofNullable(user));
+    void createPaymentShouldValidateIDAmountUserAndMessage() {
+        when(userRepository.findById(11)).thenReturn(Optional.of(user));
         paymentService.createPayment(11, 333.00);
+
+        ArgumentCaptor<Integer> argumentCaptorID = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Double> argumentCaptorAmount = ArgumentCaptor.forClass(Double.class);
+        ArgumentCaptor<User> argumentCaptorUser = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<Payment> paymentArgumentCaptor = ArgumentCaptor.forClass(Payment.class);
+
+        verify(validationService).validateUserId(argumentCaptorID.capture());
+        verify(validationService).validateAmount(argumentCaptorAmount.capture());
+        verify(validationService).validateUser(argumentCaptorUser.capture());
         verify(paymentRepository).save(paymentArgumentCaptor.capture());
 
         assertEquals(11, paymentArgumentCaptor.getValue().getUserId());
@@ -84,29 +72,41 @@ class PaymentServiceTest {
     }
 
     @Test
-    void editPaymentMessageShouldReturnPaymentRepository() {
-        validationService.validatePaymentId(payment.getPaymentId());
-        validationService.validateMessage("NEW PAYMENT");
+    void editPaymentMessageShouldTheMEssageOfPayment() {
+        paymentService.editPaymentMessage(payment.getPaymentId(), "NEW");
 
-        verify(validationService).validatePaymentId(payment.getPaymentId());
-        verify(validationService).validateMessage("NEW PAYMENT");
+        ArgumentCaptor<UUID> argumentCaptorUUID = ArgumentCaptor.forClass(UUID.class);
+        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
 
-        when(paymentRepository.editMessage(payment.getPaymentId()
-                , "The message was edited")).thenReturn(payment);
-        assertEquals(payment
-                , paymentService.editPaymentMessage(payment.getPaymentId()
-                        , "The message was edited"));
+        verify(validationService).validateMessage(argumentCaptor.capture());
+        verify(validationService).validatePaymentId(argumentCaptorUUID.capture());
+        verify(paymentRepository).editMessage(argumentCaptorUUID.capture()
+                , argumentCaptor.capture());
     }
 
     @Test
     void getAllByAmountExceeding() {
-        List<Payment> paymentList = new ArrayList<>();
-        paymentList.add(payment);
-        paymentList.add(payment);
-        paymentList.add(payment);
-        when(paymentRepository.findAll()).thenReturn(paymentList);
+        List<Payment> actualPaymentList = new ArrayList<>();
+        List<Payment> expectedPaymentList = new ArrayList<>();
 
-        assertEquals(paymentList, paymentService.getAllByAmountExceeding(54.00));
-        assertNotEquals(paymentList, paymentService.getAllByAmountExceeding(56.00));
+        Payment payment = new Payment(11, 56.00, "Payed");
+        Payment payment1 = new Payment(11, 57.00, "Payed");
+        Payment payment2 = new Payment(11, 58.00, "Payed");
+        Payment payment3 = new Payment(11, 59.00, "Payed");
+        Payment payment4 = new Payment(11, 60.00, "Payed");
+
+        actualPaymentList.add(payment);
+        actualPaymentList.add(payment1);
+        actualPaymentList.add(payment2);
+        actualPaymentList.add(payment3);
+        actualPaymentList.add(payment4);
+
+        expectedPaymentList.add(payment2);
+        expectedPaymentList.add(payment3);
+        expectedPaymentList.add(payment4);
+
+        when(paymentRepository.findAll()).thenReturn(actualPaymentList);
+
+        assertEquals(expectedPaymentList, paymentService.getAllByAmountExceeding(57.00));
     }
 }
