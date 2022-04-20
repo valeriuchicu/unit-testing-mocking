@@ -54,6 +54,8 @@ class PaymentServiceTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> paymentService.createPayment(11, 333.00))
                 .withMessage("The user ID is not valid");
+
+        verify(validationService).validateUserId(11);
     }
 
     @Test
@@ -65,6 +67,9 @@ class PaymentServiceTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> paymentService.createPayment(11, -50.00))
                 .withMessage("The amount can not be negative");
+
+        verify(validationService).validateUserId(11);
+        verify(validationService).validateAmount(-50.000);
     }
 
     @Test
@@ -75,6 +80,9 @@ class PaymentServiceTest {
         assertThatExceptionOfType(NoSuchElementException.class)
                 .isThrownBy(() -> paymentService.createPayment(22, 333.00))
                 .withMessage("User with id 22 not found");
+
+        verify(validationService).validateUserId(22);
+        verify(validationService).validateAmount(333.000);
     }
 
     @Test
@@ -88,6 +96,9 @@ class PaymentServiceTest {
         assertThatExceptionOfType(NoSuchElementException.class)
                 .isThrownBy(() -> paymentService.createPayment(22, 333.00))
                 .withMessage("This user is not active");
+
+        verify(validationService).validateUserId(22);
+        verify(validationService).validateAmount(333.000);
     }
 
     @Test

@@ -22,7 +22,7 @@ class BasicValidationServiceTest {
     }
 
     @Test
-    void shouldAcceptTheAmount() {
+    void shouldSuccessfullyValidateTheAmount() {
         assertDoesNotThrow(() -> validationService.validateAmount(55.00));
     }
 

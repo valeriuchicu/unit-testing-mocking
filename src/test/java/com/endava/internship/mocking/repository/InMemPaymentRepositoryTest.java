@@ -49,7 +49,7 @@ class InMemPaymentRepositoryTest {
     }
 
     @Test
-    void shouldThrowIllegalArgumentExceptionIfThePaymentIsNull() {
+    void shouldThrowIllegalArgumentExceptionIfThePaymentToSaveIsNull() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> paymentRepository.save(null))
                 .withMessage("Payment must not be null");
@@ -69,7 +69,7 @@ class InMemPaymentRepositoryTest {
     }
 
     @Test
-    void shouldThrowNoSuchElementExceptionIfThePaymentIsNull() {
+    void shouldThrowNoSuchElementExceptionIfThePaymentExists() {
         assertThatExceptionOfType(NoSuchElementException.class)
                 .isThrownBy(() -> paymentRepository.editMessage(payment2.getPaymentId(), "The payment was canceled"))
                 .withMessage("Payment with id " + payment2.getPaymentId() + " not found");
